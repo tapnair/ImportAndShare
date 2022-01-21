@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"f17241b9-58e2-45d7-89cd-c1fb3c4950ae",
+	"author":	"Patrick Rainsberry",
+	"description":	{
+		"":	"Demo Addin to import and create public share links."
+	},
+	"version":	"1.0",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
