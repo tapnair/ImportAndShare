@@ -27,21 +27,21 @@ def stop():
 # Event handler for the dataFileComplete event.
 def application_data_file_complete(args: adsk.core.DataEventArgs):
     # Code to react to the event.
-    futil.log(f'In application_data_file_complete event handler for: {args.filename}')
+    futil.log(f'In application_data_file_complete event handler for: {args.file.name}')
 
-    if args.filename in config.imported_filenames:
+    if args.file.name in config.imported_filenames:
         data_file: adsk.core.DataFile = args.file
         document = app.documents.open(data_file)
         public_link = data_file.publicLink
         with open(config.csv_file_name, mode='a') as csv_file:
-            fieldnames = ['Name', 'URN', 'link']
+            fieldnames = ['Name', 'URN', 'Link']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writerow({
                 'Name': data_file.name,
                 'URN': data_file.versionId,
                 'Link': public_link
             })
-        config.imported_filenames.remove(args.filename)
+        config.imported_filenames.remove(args.file.name)
         document.close(False)
 
 

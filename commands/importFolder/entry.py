@@ -109,7 +109,7 @@ def command_execute(args: adsk.core.CommandEventArgs):
                 step_options = import_manager.createSTEPImportOptions(file_path)
                 new_document = import_manager.importToNewDocument(step_options)
                 new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
-                config.imported_filenames.append(new_document.name)
+                config.imported_filenames.append(file_name)
 
 
 # This event handler is called when the command terminates.
