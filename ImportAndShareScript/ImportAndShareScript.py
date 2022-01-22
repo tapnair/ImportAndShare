@@ -1,5 +1,6 @@
 # Author Patrick Rainsberry
 # Description Sample Script
+from time import sleep
 
 import adsk.core
 import adsk.fusion
@@ -23,9 +24,6 @@ ui = app.userInterface
 def run(context):
 
     try:
-        onDataFileComplete = MyDataFileCompleteHandler()
-        app.dataFileComplete.add(onDataFileComplete)
-        local_handlers.append(onDataFileComplete)
 
         folder_dialog = ui.createFolderDialog()
         folder_dialog.title = "Select Folder"
@@ -52,33 +50,28 @@ def run(context):
                     import_manager = app.importManager
                     step_options = import_manager.createSTEPImportOptions(file_path)
                     new_document = import_manager.importToNewDocument(step_options)
+
                     new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
-                    imported_filenames.append(file_name)
+
+                    data_file = new_document.dataFile
+
+                    while not data_file.isComplete:
+                        sleep(1)
+
+                    public_link = data_file.publicLink
+
+                    with open(csv_file_name, mode='a') as csv_file:
+                        fieldnames = ['Name', 'URN', 'Link']
+                        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                        writer.writerow({
+                            'Name': data_file.name,
+                            'URN': data_file.versionId,
+                            'Link': public_link
+                        })
+
+                    new_document.close(False)
+
     except:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
-
-
-class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
-    def __init__(self):
-        super().__init__()
-
-    def notify(self, args: adsk.core.DataEventArgs):
-        if args.file.name in imported_filenames:
-            data_file: adsk.core.DataFile = args.file
-            document = app.documents.open(data_file)
-            public_link = data_file.publicLink
-            with open(csv_file_name, mode='a') as csv_file:
-                fieldnames = ['Name', 'URN', 'Link']
-                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                writer.writerow({
-                    'Name': data_file.name,
-                    'URN': data_file.versionId,
-                    'Link': public_link
-                })
-            imported_filenames.remove(args.file.name)
-            document.close(False)
-
-
-
 
