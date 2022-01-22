@@ -54,9 +54,17 @@ def run(context):
                     new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
 
                     data_file = new_document.dataFile
-
+                    
+                    time_out = 0
+                    time_out_max = 10
                     while not data_file.isComplete:
                         sleep(1)
+                        data_file.refresh(None)
+                        adsk.doEvents()
+                        if time_out > time_out_max:
+                            break
+                        else:
+                            time_out += 1
 
                     public_link = data_file.publicLink
 
