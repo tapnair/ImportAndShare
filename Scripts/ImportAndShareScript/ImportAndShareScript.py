@@ -29,6 +29,7 @@ ui = app.userInterface
 
 def run(context):
     global DONE_IMPORTING
+    global imported_filenames
     try:
 
         # Have User select a folder containing STEP Files to be imported
@@ -98,33 +99,39 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
         super().__init__()
 
     def notify(self, args: adsk.core.DataEventArgs):
+        global imported_filenames
+        try:
 
-        # Make sure we are processing a file imported from this script
-        if args.filename in imported_filenames:
-            data_file: adsk.core.DataFile = args.file
+            # Make sure we are processing a file imported from this script
+            if args.file.name in imported_filenames:
+                data_file: adsk.core.DataFile = args.file
 
-            # In this case it is really just "activating" the window.
-            document = app.documents.open(data_file, True)
+                # In this case it is really just "activating" the window.
+                document = app.documents.open(data_file, True)
 
-            # Create the public link for the data file
-            public_link = data_file.publicLink
+                # Create the public link for the data file
+                public_link = data_file.publicLink
 
-            # Write results to the output csv file
-            with open(csv_file_name, mode='a') as csv_file:
-                fieldnames = ['Name', 'URN', 'Link']
-                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                writer.writerow({
-                    'Name': data_file.name,
-                    'URN': data_file.versionId,
-                    'Link': public_link
-                })
+                # Write results to the output csv file
+                with open(csv_file_name, mode='a') as csv_file:
+                    fieldnames = ['Name', 'URN', 'Link']
+                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                    writer.writerow({
+                        'Name': data_file.name,
+                        'URN': data_file.versionId,
+                        'Link': public_link
+                    })
 
-            # remove this from the list and close
-            imported_filenames.remove(args.filename)
-            document.close(False)
+                # remove this from the list and close
+                imported_filenames.remove(args.file.name)
+                document.close(False)
 
-        # Terminate the script after the last file is processed
-        if len(imported_filenames) == 0 and DONE_IMPORTING:
-            adsk.terminate()
+            # Terminate the script after the last file is processed
+            if len(imported_filenames) == 0 and DONE_IMPORTING:
+                adsk.terminate()
+
+        except:
+            if ui:
+                ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
