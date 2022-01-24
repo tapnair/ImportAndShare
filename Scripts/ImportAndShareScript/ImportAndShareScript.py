@@ -1,7 +1,5 @@
 # Author Patrick Rainsberry
-# Description Sample Script
-from time import sleep
-
+# Description Sample Script to import and share with event handlers
 import adsk.core
 import adsk.fusion
 import traceback
@@ -102,7 +100,7 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
     def notify(self, args: adsk.core.DataEventArgs):
 
         # Make sure we are processing a file imported from this script
-        if args.file.name in imported_filenames:
+        if args.filename in imported_filenames:
             data_file: adsk.core.DataFile = args.file
 
             # In this case it is really just "activating" the window.
@@ -113,7 +111,7 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
 
             # Write results to the output csv file
             with open(csv_file_name, mode='a') as csv_file:
-                fieldnames = ['Name', 'URN', 'link']
+                fieldnames = ['Name', 'URN', 'Link']
                 writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                 writer.writerow({
                     'Name': data_file.name,
@@ -122,7 +120,7 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
                 })
 
             # remove this from the list and close
-            imported_filenames.remove(args.file.name)
+            imported_filenames.remove(args.filename)
             document.close(False)
 
         # Terminate the script after the last file is processed

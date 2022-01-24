@@ -3,7 +3,7 @@
 	"type":	"script",
 	"author":	"Patrick Rainsberry",
 	"description":	{
-		"":	"Demo Addin to import and create public share links."
+		"":	"Demo Script to import and create public share links."
 	},
 	"supportedOS":	"windows|mac",
 	"editEnabled":	true
