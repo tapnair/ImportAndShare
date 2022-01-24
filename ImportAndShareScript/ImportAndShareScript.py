@@ -102,7 +102,7 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
     def notify(self, args: adsk.core.DataEventArgs):
 
         # Make sure we are processing a file imported from this script
-        if args.filename in imported_filenames:
+        if args.file.name in imported_filenames:
             data_file: adsk.core.DataFile = args.file
 
             # In this case it is really just "activating" the window.
@@ -122,7 +122,7 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
                 })
 
             # remove this from the list and close
-            imported_filenames.remove(args.filename)
+            imported_filenames.remove(args.file.name)
             document.close(False)
 
         # Terminate the script after the last file is processed
