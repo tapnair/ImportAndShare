@@ -36,9 +36,6 @@ def application_data_file_complete(args: adsk.core.DataEventArgs):
     if args.file.name in config.imported_filenames:
         data_file: adsk.core.DataFile = args.file
 
-        # In this case it is really just "activating" the window.
-        document = app.documents.open(data_file, True)
-
         # Create the public link for the data file
         public_link = data_file.publicLink
 
@@ -54,7 +51,8 @@ def application_data_file_complete(args: adsk.core.DataEventArgs):
 
         # remove this from the list and close
         config.imported_filenames.remove(args.file.name)
-        document.close(False)
+        this_document = config.imported_documents.pop(args.file.name)
+        this_document.close(False)
 
 
 # Initial creation of csv for results

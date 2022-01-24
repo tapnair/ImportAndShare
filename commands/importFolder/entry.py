@@ -127,7 +127,11 @@ def command_execute(args: adsk.core.CommandEventArgs):
 
                 # Save the new document and record name
                 new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
+
+                # This is a bit redundant.  Wanted to show both ways to keep track.
+                # Could just check imported_documents.keys() for filename in event handler.
                 config.imported_filenames.append(file_name)
+                config.imported_documents[file_name] = new_document
 
 
 # This event handler is called when the command terminates.

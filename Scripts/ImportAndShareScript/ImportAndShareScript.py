@@ -14,6 +14,7 @@ EXTENSION_TYPES = ['.step', '.stp']
 
 # Keep track of imported files
 imported_filenames = []
+imported_documents = {}
 
 # Flag to determine when it is safe to terminate the script
 DONE_IMPORTING = False
@@ -79,6 +80,7 @@ def run(context):
                     # Save the new document and record name
                     new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
                     imported_filenames.append(file_name)
+                    imported_documents[file_name] = new_document
 
         # We have imported all of the files
         DONE_IMPORTING = True
@@ -99,15 +101,12 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
         super().__init__()
 
     def notify(self, args: adsk.core.DataEventArgs):
-        global imported_filenames
         try:
-
+            app.log(f'In Data Event handler for: {args.file.name}')
+            app.log(f'imported_filenames: {str(imported_filenames)}')
             # Make sure we are processing a file imported from this script
             if args.file.name in imported_filenames:
                 data_file: adsk.core.DataFile = args.file
-
-                # In this case it is really just "activating" the window.
-                document = app.documents.open(data_file, True)
 
                 # Create the public link for the data file
                 public_link = data_file.publicLink
@@ -124,11 +123,13 @@ class MyDataFileCompleteHandler(adsk.core.DataEventHandler):
 
                 # remove this from the list and close
                 imported_filenames.remove(args.file.name)
-                document.close(False)
+                this_document = imported_documents.pop(args.file.name)
+                this_document.close(False)
 
             # Terminate the script after the last file is processed
             if len(imported_filenames) == 0 and DONE_IMPORTING:
                 adsk.terminate()
+                app.log(f'Script Complete')
 
         except:
             if ui:

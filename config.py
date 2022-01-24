@@ -28,3 +28,6 @@ csv_file_name = os.path.join(os.path.dirname(__file__), 'output.csv')
 
 # Extension types that will be processed for import
 EXTENSION_TYPES = ['.step', '.stp']
+
+# Keep track of imported files
+imported_documents = {}
