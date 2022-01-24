@@ -5,10 +5,12 @@ from ... import config
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_cmdDialog'
+# Set Command name and description
 CMD_NAME = 'Import Folder'
-CMD_Description = 'IMport a folder of STEP files and create share links'
+CMD_Description = 'Import a folder of STEP files and create share links'
+
+# Command ID must be unique relative to other commands in Fusion 360
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
 
 # Specify that the command will be promoted to the panel.
 IS_PROMOTED = True
@@ -28,10 +30,8 @@ ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resource
 local_handlers = []
 
 
-EXTENSION_TYPES = ['.step', '.stp']
-
-
 # Executed when add-in is run.
+# Typically don't need to change anything here.
 def start():
     # Create a command Definition.
     cmd_def = ui.commandDefinitions.addButtonDefinition(CMD_ID, CMD_NAME, CMD_Description, ICON_FOLDER)
@@ -54,6 +54,7 @@ def start():
 
 
 # Executed when add-in is stopped.
+# Typically don't need to change anything here.
 def stop():
     # Get the various UI elements for this command
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
@@ -76,8 +77,11 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Created Event')
 
+    # This command will auto-execute.
+    # Meaning it will not create a command dialog for user input
     args.command.isAutoExecute = True
 
+    # Add handlers for the execute and destroy events of the command
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
 
@@ -88,6 +92,7 @@ def command_execute(args: adsk.core.CommandEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Execute Event')
 
+    # Have User select a folder containing STEP Files to be imported
     folder_dialog = ui.createFolderDialog()
     folder_dialog.title = "Select Folder"
     dialog_result = folder_dialog.showDialog()
@@ -96,18 +101,31 @@ def command_execute(args: adsk.core.CommandEventArgs):
     else:
         return
 
-    target_data_folder = app.data.activeProject.rootFolder
+    # For this script we are simply choosing the root folder of the currently active project
+    # You can see this in the in the data panel
+    # Here you could do something more complete to determine the proper location
+    try:
+        target_data_folder = app.data.activeProject.rootFolder
+    except:
+        ui.messageBox("You probably are navigated to a project in the data panel. "
+                      "For example, can't be in recent documents.")
+        return
+
+    # Iterate over all STEP files in user selected directory
     for full_file_name in os.listdir(folder):
         file_path = os.path.join(folder, full_file_name)
-        # checking if it is a file
         if os.path.isfile(file_path):
             split_tup = os.path.splitext(full_file_name)
             file_name = split_tup[0]
             file_extension = split_tup[1]
-            if file_extension in EXTENSION_TYPES:
+            if file_extension in config.EXTENSION_TYPES:
+
+                # Execute the Fusion 360 import into a new document
                 import_manager = app.importManager
                 step_options = import_manager.createSTEPImportOptions(file_path)
                 new_document = import_manager.importToNewDocument(step_options)
+
+                # Save the new document and record name
                 new_document.saveAs(file_name, target_data_folder, 'Imported from script', 'tag')
                 config.imported_filenames.append(file_name)
 
@@ -117,5 +135,6 @@ def command_destroy(args: adsk.core.CommandEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Destroy Event')
 
+    # Clean up event handlers
     global local_handlers
     local_handlers = []

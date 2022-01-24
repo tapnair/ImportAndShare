@@ -17,8 +17,14 @@ DEBUG = True
 ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
 COMPANY_NAME = 'Autodesk'
 
+
+# *********** Global Variables Unique to this Add-in **************
+
+# Keep track of imported files
 imported_filenames = []
 
-results = []
-
+# Output csv file to record results.
 csv_file_name = os.path.join(os.path.dirname(__file__), 'output.csv')
+
+# Extension types that will be processed for import
+EXTENSION_TYPES = ['.step', '.stp']

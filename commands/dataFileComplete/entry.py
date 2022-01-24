@@ -15,7 +15,11 @@ local_handlers = []
 
 # Executed when add-in is run.
 def start():
+
+    # Create the event handler for when data files are complete.
     futil.add_handler(app.dataFileComplete, application_data_file_complete, local_handlers=local_handlers)
+
+    # Create a csv file for the results.
     create_csv()
 
 
@@ -24,15 +28,21 @@ def stop():
     pass
 
 
-# Event handler for the dataFileComplete event.
+# Function to be executed by the dataFileComplete event.
 def application_data_file_complete(args: adsk.core.DataEventArgs):
-    # Code to react to the event.
     futil.log(f'In application_data_file_complete event handler for: {args.file.name}')
 
+    # Make sure we are processing a file imported from this script
     if args.file.name in config.imported_filenames:
         data_file: adsk.core.DataFile = args.file
-        document = app.documents.open(data_file)
+
+        # In this case it is really just "activating" the window.
+        document = app.documents.open(data_file, True)
+
+        # Create the public link for the data file
         public_link = data_file.publicLink
+
+        # Write results to the output csv file
         with open(config.csv_file_name, mode='a') as csv_file:
             fieldnames = ['Name', 'URN', 'Link']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -41,10 +51,13 @@ def application_data_file_complete(args: adsk.core.DataEventArgs):
                 'URN': data_file.versionId,
                 'Link': public_link
             })
+
+        # remove this from the list and close
         config.imported_filenames.remove(args.file.name)
         document.close(False)
 
 
+# Initial creation of csv for results
 def create_csv():
     with open(config.csv_file_name, mode='w') as csv_file:
         fieldnames = ['Name', 'URN', 'Link']
