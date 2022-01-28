@@ -31,3 +31,13 @@ EXTENSION_TYPES = ['.step', '.stp']
 
 # Keep track of imported files
 imported_documents = {}
+
+custom_event_id_import = 'custom_event_import'
+custom_event_id_save = 'custom_event_id_save'
+custom_event_id_close = 'custom_event_id_close'
+
+target_data_folder = None
+
+results = []
+run_finished = False
+

@@ -4,11 +4,15 @@
 # You need to use aliases (import "entry" as "my_module") assuming you have the default module named "entry".
 from .importFolder import entry as import_folder
 from .dataFileComplete import entry as complete
+from .closeAll import entry as close
+from .processRemaining import entry as remaining
 
 # Fusion will automatically call the start() and stop() functions.
 commands = [
     import_folder,
     complete,
+    close,
+    remaining,
 ]
 
 

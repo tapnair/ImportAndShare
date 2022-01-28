@@ -1,5 +1,3 @@
-import json
-
 import adsk.core
 import os
 from ...lib import fusion360utils as futil
@@ -8,8 +6,8 @@ app = adsk.core.Application.get()
 ui = app.userInterface
 
 # Set Command name and description
-CMD_NAME = 'Import Folder'
-CMD_Description = 'Import a folder of STEP files and create share links'
+CMD_NAME = 'Close All'
+CMD_Description = 'Closes all active documents'
 
 # Command ID must be unique relative to other commands in Fusion 360
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
@@ -94,44 +92,11 @@ def command_execute(args: adsk.core.CommandEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Execute Event')
 
-    # Have User select a folder containing STEP Files to be imported
-    folder_dialog = ui.createFolderDialog()
-    folder_dialog.title = "Select Folder"
-    dialog_result = folder_dialog.showDialog()
-    if dialog_result == adsk.core.DialogResults.DialogOK:
-        folder = folder_dialog.folder
-    else:
-        return
+    all_docs = [document for document in app.documents]
 
-    # For this script we are simply choosing the root folder of the currently active project
-    # You can see this in the in the data panel
-    # Here you could do something more complete to determine the proper location
-    try:
-        config.target_data_folder = app.data.activeProject.rootFolder
-    except:
-        ui.messageBox("You probably are navigated to a project in the data panel. "
-                      "For example, can't be in recent documents.")
-        return
-
-    config.results = []
-    config.run_finished = False
-
-    # Iterate over all STEP files in user selected directory
-    for full_file_name in os.listdir(folder):
-        file_path = os.path.join(folder, full_file_name)
-        if os.path.isfile(file_path):
-            split_tup = os.path.splitext(full_file_name)
-            file_name = split_tup[0]
-            file_extension = split_tup[1]
-            if file_extension in config.EXTENSION_TYPES:
-
-                event_data = {
-                    'file_name': file_name,
-                    'file_path': file_path
-                }
-                # config.imported_filenames.append(file_name)
-                additional_info = json.dumps(event_data)
-                app.fireCustomEvent(config.custom_event_id_import, additional_info)
+    doc: adsk.core.Document
+    for doc in all_docs:
+        doc.close(False)
 
 
 # This event handler is called when the command terminates.
