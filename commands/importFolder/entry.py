@@ -1,4 +1,5 @@
 import json
+import time
 
 import adsk.core
 import os
@@ -142,3 +143,4 @@ def command_destroy(args: adsk.core.CommandEventArgs):
     # Clean up event handlers
     global local_handlers
     local_handlers = []
+

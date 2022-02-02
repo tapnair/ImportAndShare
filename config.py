@@ -23,14 +23,14 @@ COMPANY_NAME = 'Autodesk'
 # Keep track of imported files
 imported_filenames = []
 
+# Keep track of imported files
+imported_documents = {}
+
 # Output csv file to record results.
 csv_file_name = os.path.join(os.path.dirname(__file__), 'output.csv')
 
 # Extension types that will be processed for import
 EXTENSION_TYPES = ['.step', '.stp']
-
-# Keep track of imported files
-imported_documents = {}
 
 custom_event_id_import = 'custom_event_import'
 custom_event_id_save = 'custom_event_id_save'
@@ -40,4 +40,3 @@ target_data_folder = None
 
 results = []
 run_finished = False
-

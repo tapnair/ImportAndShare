@@ -1,5 +1,6 @@
 import csv
 import json
+import time
 
 import adsk.core
 
@@ -24,7 +25,7 @@ my_custom_handlers = []
 def start():
     app.unregisterCustomEvent(config.custom_event_id_import)
     custom_event_import = app.registerCustomEvent(config.custom_event_id_import)
-    custom_event_handler_import = futil.add_handler(custom_event_import, custom_event_import_execute, name=NAME2)
+    custom_event_handler_import = futil.add_handler(custom_event_import, handle_import, name=NAME2)
     my_custom_handlers.append({
         'custom_event_id': config.custom_event_id_import,
         'custom_event': custom_event_import,
@@ -33,7 +34,7 @@ def start():
 
     app.unregisterCustomEvent(config.custom_event_id_save)
     custom_event_save = app.registerCustomEvent(config.custom_event_id_save)
-    custom_event_handler_save = futil.add_handler(custom_event_save, custom_event_save_execute, name=NAME3)
+    custom_event_handler_save = futil.add_handler(custom_event_save, handle_save, name=NAME3)
     my_custom_handlers.append({
         'custom_event_id': config.custom_event_id_save,
         'custom_event': custom_event_save,
@@ -42,7 +43,7 @@ def start():
 
     app.unregisterCustomEvent(config.custom_event_id_close)
     custom_event_close = app.registerCustomEvent(config.custom_event_id_close)
-    custom_event_handler_close = futil.add_handler(custom_event_close, custom_event_close_execute, name=NAME4)
+    custom_event_handler_close = futil.add_handler(custom_event_close, handle_close, name=NAME4)
     my_custom_handlers.append({
         'custom_event_id': config.custom_event_id_close,
         'custom_event': custom_event_close,
@@ -51,12 +52,17 @@ def start():
 
     # Create the event handler for when data files are complete.
     my_data_handlers.append(
-        futil.add_handler(app.dataFileComplete, application_data_file_complete, local_handlers=local_handlers,
+        futil.add_handler(app.dataFileComplete, handle_data_file_complete, local_handlers=local_handlers,
                           name=NAME1))
+    futil.log(f'**********local_handlers added: {len(local_handlers)}')
+    futil.log(f'**********my_data_handlers added: {len(my_data_handlers)}')
 
 
 # Executed when add-in is stopped.  Remove events.
 def stop():
+    futil.log(f'**********local_handlers stop: {len(local_handlers)}')
+    futil.log(f'**********my_data_handlers stop: {len(my_data_handlers)}')
+
     for custom_item in my_custom_handlers:
         custom_item['custom_event'].remove(custom_item['custom_event_handler'])
         app.unregisterCustomEvent(custom_item['custom_event_id'])
@@ -66,7 +72,7 @@ def stop():
 
 
 # Import a document from the list
-def custom_event_import_execute(args: adsk.core.CustomEventArgs):
+def handle_import(args: adsk.core.CustomEventArgs):
     event_data = json.loads(args.additionalInfo)
     file_name = event_data['file_name']
     file_path = event_data['file_path']
@@ -92,7 +98,7 @@ def custom_event_import_execute(args: adsk.core.CustomEventArgs):
 
 
 # Save a specific Document
-def custom_event_save_execute(args: adsk.core.CustomEventArgs):
+def handle_save(args: adsk.core.CustomEventArgs):
     event_data = json.loads(args.additionalInfo)
     file_name = event_data['file_name']
 
@@ -103,59 +109,72 @@ def custom_event_save_execute(args: adsk.core.CustomEventArgs):
 
 
 # Close a specific document
-def custom_event_close_execute(args: adsk.core.CustomEventArgs):
+def handle_close(args: adsk.core.CustomEventArgs):
     event_data = json.loads(args.additionalInfo)
     file_name = event_data['file_name']
 
     futil.log(f'**********Closing: {file_name}')
 
-    new_document = config.imported_documents[file_name]
-    new_document.close(False)
+    new_document = config.imported_documents.pop(file_name, False)
+    if new_document:
+        new_document.close(False)
 
 
 # Function to be executed by the dataFileComplete event.
-def application_data_file_complete(args: adsk.core.DataEventArgs):
+def handle_data_file_complete(args: adsk.core.DataEventArgs):
     futil.log(f'***In application_data_file_complete event handler for: {args.file.name}')
 
     # Get the dataFile and process it
-    data_file: adsk.core.DataFile = args.file
-    process_data_file(data_file)
+    # data_file: adsk.core.DataFile = args.file
+    # process_data_file(data_file)
+
+    document: adsk.core.Document
+    for file_name, document in config.imported_documents.items():
+        if document.isValid:
+            if document.dataFile.isComplete:
+                process_data_file(document.dataFile)
+                # document.close(False)
 
 
 def process_data_file(data_file: adsk.core.DataFile):
     # Make sure we are processing a file imported from this script
     if data_file.name in config.imported_filenames:
+        try:
+            # Create the public link for the data file
+            public_link = data_file.publicLink
+            futil.log(f"**********Created public link for {data_file.name}: {public_link}")
 
-        # Create the public link for the data file
-        public_link = data_file.publicLink
-        futil.log(f"**********Created public link: {public_link}")
+            # Store the result of this file
+            config.results.append({
+                'Name': data_file.name,
+                'URN': data_file.versionId,
+                'Link': public_link
+            })
 
-        # Store the result of this file
-        config.results.append({
-            'Name': data_file.name,
-            'URN': data_file.versionId,
-            'Link': public_link
-        })
-        config.imported_filenames.remove(data_file.name)
+            config.imported_filenames.remove(data_file.name)
 
-        # Fire close event for this Document
-        event_data = {
-            'file_name': data_file.name,
-        }
-        additional_info = json.dumps(event_data)
-        app.fireCustomEvent(config.custom_event_id_close, additional_info)
+            # Fire close event for this Document
+            event_data = {
+                'file_name': data_file.name,
+            }
+            additional_info = json.dumps(event_data)
+            app.fireCustomEvent(config.custom_event_id_close, additional_info)
+
+        except:
+            futil.handle_error('process_data_file')
 
         # If all documents have been processed finalize results
         if len(config.imported_filenames) == 0:
             if not config.run_finished:
                 config.run_finished = True
-                finished()
+                write_results()
     else:
-        futil.log(f"**********Already processed: {data_file.name}")
+        # futil.log(f"**********Already processed: {data_file.name}")
+        ...
 
 
 # After all files are processed write the results
-def finished():
+def write_results():
     futil.log(f"Writing CSV")
     with open(config.csv_file_name, mode='w') as csv_file:
         fieldnames = ['Name', 'URN', 'Link']
@@ -163,3 +182,5 @@ def finished():
         writer.writeheader()
         for row in config.results:
             writer.writerow(row)
+
+
