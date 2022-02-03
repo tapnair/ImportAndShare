@@ -38,6 +38,7 @@ def add_handler(
     event.add(handler)
     return handler
 
+
 def clear_handlers():
     """Clears the global list of handlers.
     """
