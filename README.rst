@@ -70,6 +70,11 @@ This will perform the import, create share link, and close the files.
 The main difference here is that it does not create a command icon and is not using the full Add-in Framework.
 It does show the implementation of an Event Handler to react when the imported files are ready for processing.
 
+Other Use Cases
+---------------
+`See here for an interesting fork of this repo that also publishes the data to airtable <https://github.com/IronicMango/ImportAndShare>`_
+
+
 License
 -------
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
